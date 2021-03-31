@@ -628,7 +628,7 @@ static int forward_query(int udpfd, union mysockaddr *udpaddr,
   return 0;
 }
 
-static size_t process_reply(struct dns_header *header, time_t now, struct server *server, size_t n, int check_rebind, 
+static ssize_t process_reply(struct dns_header *header, time_t now, struct server *server, size_t n, int check_rebind, 
 			    int no_cache, int cache_secure, int bogusanswer, int ad_reqd, int do_bit, int added_pheader, 
 			    int check_subnet, union mysockaddr *query_source)
 {
@@ -734,18 +734,16 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
       server && !(server->flags & SERV_WARNED_RECURSIVE))
     {
       (void)prettyprint_addr(&server->addr, daemon->namebuff);
-      my_syslog(LOG_WARNING, _("nameserver %s refused to do a recursive query"), daemon->namebuff);
+      my_syslog(LOG_WARNING, _("nameserver %s@%s refused to do a recursive query"), daemon->namebuff, server->interface);
       if (!option_bool(OPT_LOG))
 	server->flags |= SERV_WARNED_RECURSIVE;
+	  return -1;
     }  
 
   if (daemon->bogus_addr && rcode != NXDOMAIN &&
       check_for_bogus_wildcard(header, n, daemon->namebuff, now))
     {
-      munged = 1;
-      SET_RCODE(header, NXDOMAIN);
-      header->hb3 &= ~HB3_AA;
-      cache_secure = 0;
+		return -1;
     }
   else 
     {
@@ -823,7 +821,7 @@ void reply_query(int fd, time_t now)
   struct frec *forward;
   socklen_t addrlen = sizeof(serveraddr);
   ssize_t n = recvfrom(fd, daemon->packet, daemon->packet_buff_sz, 0, &serveraddr.sa, &addrlen);
-  size_t nn;
+  ssize_t nn;
   struct server *server;
   void *hash;
 
@@ -1211,7 +1209,7 @@ void reply_query(int fd, time_t now)
       
       if ((nn = process_reply(header, now, forward->sentto, (size_t)n, check_rebind, no_cache_dnssec, cache_secure, bogusanswer, 
 			      forward->flags & FREC_AD_QUESTION, forward->flags & FREC_DO_QUESTION, 
-			      forward->flags & FREC_ADDED_PHEADER, forward->flags & FREC_HAS_SUBNET, &forward->frec_src.source)))
+			      forward->flags & FREC_ADDED_PHEADER, forward->flags & FREC_HAS_SUBNET, &forward->frec_src.source)) > 0)
 	{
 	  struct frec_src *src;
 
@@ -1250,6 +1248,8 @@ void reply_query(int fd, time_t now)
 		}
 	    }
 	}
+
+	if(nn < 0) return;
 
       free_frec(forward); /* cancel */
     }
