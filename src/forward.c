@@ -682,7 +682,7 @@ static struct ipsets *domain_find_sets(struct ipsets *setlist, const char *domai
   return ret;
 }
 
-static size_t process_reply(struct dns_header *header, time_t now, struct server *server, size_t n, int check_rebind, 
+static ssize_t process_reply(struct dns_header *header, time_t now, struct server *server, size_t n, int check_rebind, 
 			    int no_cache, int cache_secure, int bogusanswer, int ad_reqd, int do_bit, int added_pheader, 
 			    union mysockaddr *query_source, unsigned char *limit, int ede)
 {
@@ -777,9 +777,10 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
       server && !(server->flags & SERV_WARNED_RECURSIVE))
     {
       (void)prettyprint_addr(&server->addr, daemon->namebuff);
-      my_syslog(LOG_WARNING, _("nameserver %s refused to do a recursive query"), daemon->namebuff);
+      my_syslog(LOG_WARNING, _("nameserver %s@%s refused to do a recursive query"), daemon->namebuff, server->interface);
       if (!option_bool(OPT_LOG))
 	server->flags |= SERV_WARNED_RECURSIVE;
+	  return -1;
     }  
 
   if (header->hb3 & HB3_TC)
@@ -811,13 +812,7 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
       if (daemon->bogus_addr && rcode != NXDOMAIN &&
 	  check_for_bogus_wildcard(header, n, daemon->namebuff, now))
 	{
-	  header->ancount = htons(0);
-	  header->nscount = htons(0);
-	  header->arcount = htons(0);
-	  SET_RCODE(header, NXDOMAIN);
-	  header->hb3 &= ~HB3_AA;
-	  cache_secure = 0;
-	  ede = EDE_BLOCKED;
+		return -1;
 	}
       else
 	{
@@ -1185,7 +1180,7 @@ void reply_query(int fd, time_t now)
       unsigned short udp_size =  PACKETSZ; /* default if no EDNS0 */
       size_t plen;
       int is_sign;
-      size_t nn = 0;
+      ssize_t nn = 0;
       
 #ifdef HAVE_DNSSEC
       /* The query MAY have got a good answer, and be awaiting
@@ -1304,7 +1299,7 @@ void reply_query(int fd, time_t now)
 static void return_reply(time_t now, struct frec *forward, struct dns_header *header, ssize_t n, int status)
 {
   int check_rebind = 0, no_cache_dnssec = 0, cache_secure = 0, bogusanswer = 0;
-  size_t nn;
+  ssize_t nn;
   int ede = EDE_UNSET;
 
   (void)status;
@@ -1357,6 +1352,7 @@ static void return_reply(time_t now, struct frec *forward, struct dns_header *he
 	  log_query(F_SECSTAT, domain, &a, result, 0);
 	}
     }
+	  struct frec_src *src;
 
   if ((daemon->limit[LIMIT_CRYPTO] - forward->validate_counter) > (int)daemon->metrics[METRIC_CRYPTO_HWM])
     daemon->metrics[METRIC_CRYPTO_HWM] = daemon->limit[LIMIT_CRYPTO] - forward->validate_counter;
@@ -1382,7 +1378,7 @@ static void return_reply(time_t now, struct frec *forward, struct dns_header *he
   if ((nn = process_reply(header, now, forward->sentto, (size_t)n, check_rebind, no_cache_dnssec, cache_secure, bogusanswer, 
 			  forward->flags & FREC_AD_QUESTION, forward->flags & FREC_DO_QUESTION, 
 			  forward->flags & FREC_ADDED_PHEADER, &forward->frec_src.source,
-			  ((unsigned char *)header) + daemon->edns_pktsz, ede)))
+			  ((unsigned char *)header) + daemon->edns_pktsz, ede)) > 0)
     {
       struct frec_src *src;
       
@@ -1431,6 +1427,12 @@ static void return_reply(time_t now, struct frec *forward, struct dns_header *he
 		}
 	    }
 	}
+
+		if(nn < 0) {
+			return;
+		}
+
+      free_frec(forward); /* cancel */
     }
 
   free_frec(forward); /* cancel */
