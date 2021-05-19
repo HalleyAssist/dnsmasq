@@ -2645,7 +2645,11 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		{
 			for (intf = if_nidxs; intf->if_index != 0 || intf->if_name != NULL; intf++)
 			{
-				
+				// query all wlan and eth devices (only)
+				if(strncmp (intf->if_name, "wlan", 4) != 0 && strncmp (intf->if_name, "eth", 3) != 0) {
+					continue
+				}
+
 				allnode = opt_malloc(sizeof(struct server));
 				memcpy(allnode, newlist, sizeof(*allnode));
 				
@@ -2656,6 +2660,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 				if(allroot == NULL){
 					alltail = allnode;
 				}
+
 				strcpy(allnode->interface, intf->if_name);
 				allroot = allnode;
 			}
