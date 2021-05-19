@@ -2647,7 +2647,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 			{
 				// query all wlan and eth devices (only)
 				if(strncmp (intf->if_name, "wlan", 4) != 0 && strncmp (intf->if_name, "eth", 3) != 0) {
-					continue
+					continue;
 				}
 
 				allnode = opt_malloc(sizeof(struct server));
