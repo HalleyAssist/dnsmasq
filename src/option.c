@@ -3084,11 +3084,30 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		    /* address=/#/ matches the same as without domain, as does server=/#/.... for consistency. */
 		    if (cur_domain[0] == '#' && cur_domain[1] == 0)
 		      cur_domain[0] = 0;
-		  }
-		
-		if (!add_update_server(flags, sdetails.addr, sdetails.source_addr, sdetails.interface, cur_domain, &addr))
-		  ret_err(gen_err);
-		
+		  }		
+
+		if(strcmp(sdetails.interface, "all") == 0){
+			struct if_nameindex *if_nidxs, *intf;
+
+			if_nidxs = if_nameindex();
+			if ( if_nidxs != NULL )
+			{
+				for (intf = if_nidxs; intf->if_index != 0 || intf->if_name != NULL; intf++)
+				{
+					strcpy(sdetails.interface, intf->if_name);
+					
+					if (!add_update_server(flags, sdetails.addr, sdetails.source_addr, sdetails.interface, cur_domain, &addr))
+						ret_err(gen_err);
+						
+				}
+			}
+
+			if_freenameindex(if_nidxs);
+		} else {		
+			if (!add_update_server(flags, sdetails.addr, sdetails.source_addr, sdetails.interface, cur_domain, &addr))
+		  		ret_err(gen_err);
+		}
+
 		if (!lastdomain || cur_domain == lastdomain)
 		  break;
 
