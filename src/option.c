@@ -3094,7 +3094,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 			{
 				for (intf = if_nidxs; intf->if_index != 0 || intf->if_name != NULL; intf++)
 				{
-					if(strncmp (intf->if_name, "wlan", 4) != 0 && strncmp (intf->if_name, "eth", 3) != 0) {
+					if(strncmp (intf->if_name, "wlan", 4) != 0 && strncmp (intf->if_name, "eth", 3) != 0 && strncmp (intf->if_name, "usb", 3) != 0) {
 						continue;
 					}
 					strcpy(sdetails.interface, intf->if_name);
