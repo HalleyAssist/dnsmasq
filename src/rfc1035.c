@@ -1368,9 +1368,6 @@ int check_for_bogus_wildcard(struct dns_header *header, size_t qlen, char *name,
     {
       /* Found a bogus address. Insert that info here, since there no SOA record
 	 to get the ttl from in the normal processing */
-      cache_start_insert();
-      cache_insert(name, NULL, C_IN, now, ttl, F_FORWARD | F_NEG | F_NXDOMAIN);
-      cache_end_insert();
       log_query(F_CONFIG | F_FORWARD | F_NEG | F_NXDOMAIN, name, NULL, NULL, 0);
 
       return 1;
