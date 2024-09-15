@@ -2581,7 +2581,7 @@ static int random_sock(struct server *s)
 	return fd;
 
       /* don't log errors due to running out of available ports, we handle those. */
-      if (!sockaddr_isnull(&s->source_addr) || errno != EADDRINUSE)
+      if (!sockaddr_isnull(&s->source_addr) || (errno != EADDRINUSE && errno != EADDRNOTAVAIL))
 	{
 	  if (s->interface[0] == 0)
 	    (void)prettyprint_addr(&s->source_addr, daemon->addrbuff);
