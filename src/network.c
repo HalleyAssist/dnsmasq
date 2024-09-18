@@ -1094,7 +1094,7 @@ static struct listener *create_listeners(union mysockaddr *addr, int do_tftp, in
   if (daemon->port != 0)
     {
       fd = make_sock(addr, SOCK_DGRAM, dienow);
-      tcpfd = make_sock(addr, SOCK_STREAM, dienow);
+      //tcpfd = make_sock(addr, SOCK_STREAM, dienow);
     }
   
 #ifdef HAVE_TFTP
