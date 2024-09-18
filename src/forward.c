@@ -1270,13 +1270,6 @@ void reply_query(int fd, time_t now)
 
   forward->sentto = server;
 
-  /* We have a good answer, and will now validate it or return it. 
-     It may be some time before this the validation completes, but we don't need
-     any more answers, so close the socket(s) on which we were expecting
-     answers, to conserve file descriptors, and to save work reading and
-     discarding answers for other upstreams. */
-  free_rfds(&forward->rfds);
-
   /* calculate modified moving average of server latency */
   if (server->query_latency == 0)
     server->mma_latency = (dnsmasq_milliseconds() - forward->forward_timestamp) * 128; /* init */
@@ -1432,10 +1425,15 @@ static void return_reply(time_t now, struct frec *forward, struct dns_header *he
 			return;
 		}
 
-      free_frec(forward); /* cancel */
+		/* We have a good answer, and will now validate it or return it. 
+			It may be some time before this the validation completes, but we don't need
+			any more answers, so close the socket(s) on which we were expecting
+			answers, to conserve file descriptors, and to save work reading and
+			discarding answers for other upstreams. */
+		//free_rfds(&forward->rfds);
+	
+		free_frec(forward); /* cancel */
     }
-
-  free_frec(forward); /* cancel */
 }
 
 
