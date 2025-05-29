@@ -26,10 +26,10 @@
 #define DNSSEC_LIMIT_SIG_FAIL 20 /* Number of signature that can fail to validate in one answer */
 #define DNSSEC_LIMIT_CRYPTO 200 /* max no. of crypto operations to validate one query. */
 #define DNSSEC_LIMIT_NSEC3_ITERS 150 /* Max. number if iterations allowed in NSEC3 record. */
-#define TIMEOUT 10     /* drop UDP queries after TIMEOUT seconds */
+#define TIMEOUT 5     /* drop UDP queries after TIMEOUT seconds */
 #define SMALL_PORT_RANGE 30 /* If DNS port range is smaller than this, use different allocation. */
 #define FORWARD_TEST 50 /* try all servers every 50 queries */
-#define FORWARD_TIME 20 /* or 20 seconds */
+#define FORWARD_TIME 15 /* or 20 seconds */
 #define UDP_TEST_TIME 60 /* How often to reset our idea of max packet size. */
 #define SERVERS_LOGGED 30 /* Only log this many servers when logging state */
 #define LOCALS_LOGGED 8 /* Only log this many local addresses when logging state */
